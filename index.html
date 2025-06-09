@@ -3,20 +3,155 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Notion Widget</title>
+  <title>Wetter Widget Wien</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 30px; }
-    .box { background: #f4f4f4; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    :root {
+      --sunny: url('https://images.unsplash.com/photo-1505483531331-fc3cf89fd382?auto=format&fit=crop&w=500&q=80');
+      --cloudy: url('https://images.unsplash.com/photo-1532298488760-970ff6decf61?auto=format&fit=crop&w=500&q=80');
+      --rainy: url('https://images.unsplash.com/photo-1498715886591-3f37f77953f8?auto=format&fit=crop&w=500&q=80');
+      --snowy: url('https://images.unsplash.com/photo-1608889175776-8a5c820e9ec0?auto=format&fit=crop&w=500&q=80');
+      --stormy: url('https://images.unsplash.com/photo-1525879000488-6ea8e17d93cd?auto=format&fit=crop&w=500&q=80');
+      --thunder: url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=500&q=80');
+
+      --clear-night: url('https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=500&q=80');
+      --cloudy-night: url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=500&q=80');
+      --rainy-night: url('https://images.unsplash.com/photo-1508610048659-a06b669e351d?auto=format&fit=crop&w=500&q=80');
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Helvetica Neue', sans-serif;
+    }
+
+    .widget {
+      width: 250px;
+      height: 250px;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background-size: cover;
+      background-position: center;
+      transition: background-image 1s ease-in-out;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      z-index: 1;
+    }
+
+    .icon-bg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 180px;
+      color: rgba(255, 255, 255, 0.25);
+      z-index: 2;
+    }
+
+    .temperature {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 58px;
+      color: white;
+      font-weight: bold;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+      z-index: 3;
+    }
+
+    .location {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 20px;
+      color: white;
+      letter-spacing: 2px;
+      font-weight: bold;
+      z-index: 3;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>📅 Mein Notion Widget</h2>
-    <p>Heute ist der <strong><span id="date"></span></strong>.</p>
+  <div class="widget" id="widget">
+    <div class="overlay" id="overlay"></div>
+    <div class="icon-bg" id="weather-icon">⛅</div>
+    <div class="temperature" id="temperature">--°</div>
+    <div class="location">WIEN</div>
   </div>
 
   <script>
-    document.getElementById("date").innerText = new Date().toLocaleDateString("de-AT", { weekday: 'long', day: 'numeric', month: 'long' });
+    function isNightTime() {
+      const now = new Date();
+      const hours = now.getHours();
+      return hours < 6 || hours > 20;
+    }
+
+    async function loadWeather() {
+      try {
+        const response = await fetch("https://wttr.in/Vienna?format=%t+%c");
+        const text = await response.text();
+        const match = text.match(/(-?\d+)°C\s(.+)/);
+        const widget = document.getElementById("widget");
+
+        if (match) {
+          const temperature = match[1] + "°";
+          const icon = match[2];
+
+          document.getElementById("temperature").innerText = temperature;
+          document.getElementById("weather-icon").innerText = icon;
+
+          let bgImage = '';
+
+          if (isNightTime()) {
+            if (icon.includes("☁") || icon.includes("⛅")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--cloudy-night');
+            } else if (icon.includes("🌧") || icon.includes("☔") || icon.includes("🌦")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--rainy-night');
+            } else {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--clear-night');
+            }
+          } else {
+            if (icon.includes("☀") || icon.includes("🌞")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--sunny');
+            } else if (icon.includes("☁") || icon.includes("⛅")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--cloudy');
+            } else if (icon.includes("🌧") || icon.includes("☔") || icon.includes("🌦")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--rainy');
+            } else if (icon.includes("❄") || icon.includes("☃")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--snowy');
+            } else if (icon.includes("💨")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--stormy');
+            } else if (icon.includes("⚡") || icon.includes("⛈")) {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--thunder');
+            } else {
+              bgImage = getComputedStyle(document.documentElement).getPropertyValue('--cloudy');
+            }
+          }
+
+          widget.style.backgroundImage = bgImage;
+
+        } else {
+          document.getElementById("temperature").innerText = "??°";
+        }
+      } catch (e) {
+        document.getElementById("temperature").innerText = "offline";
+      }
+    }
+
+    loadWeather();
   </script>
 </body>
 </html>
