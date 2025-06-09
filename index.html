@@ -1,38 +1,22 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Wetter Wien</title>
+  <title>Notion Widget</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      background-color: #f3f3f3;
-      padding: 20px;
-    }
-    .widget {
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      max-width: 300px;
-      margin: auto;
-    }
+    body { font-family: sans-serif; text-align: center; padding: 30px; }
+    .box { background: #f4f4f4; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
-  <div class="widget">
-    <h3>🌤️ Wetter Wien</h3>
-    <p id="temp">Lade Temperatur...</p>
+  <div class="box">
+    <h2>📅 Mein Notion Widget</h2>
+    <p>Heute ist der <strong><span id="date"></span></strong>.</p>
   </div>
 
   <script>
-    async function fetchWeather() {
-      const response = await fetch("https://wttr.in/Vienna?format=%t");
-      const temp = await response.text();
-      document.getElementById("temp").innerText = `Aktuell: ${temp}`;
-    }
-    fetchWeather();
+    document.getElementById("date").innerText = new Date().toLocaleDateString("de-AT", { weekday: 'long', day: 'numeric', month: 'long' });
   </script>
 </body>
 </html>
